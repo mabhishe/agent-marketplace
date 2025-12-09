@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, agents, deployments, subscriptions, agentExecutions } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,52 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Agent queries
+export async function getAgentById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getPublishedAgents(limit: number = 20, offset: number = 0) {
+  const db = await getDb();
+  if (!db) return [];
+  const result = await db.select().from(agents).where(eq(agents.status, 'published')).limit(limit).offset(offset);
+  return result;
+}
+
+export async function searchAgents(query: string, category?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  // Basic search implementation
+  return db.select().from(agents).where(eq(agents.status, 'published')).limit(20);
+}
+
+// Deployment queries
+export async function getDeploymentsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(deployments).where(eq(deployments.userId, userId));
+}
+
+export async function getDeploymentById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(deployments).where(eq(deployments.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Subscription queries
+export async function getSubscriptionsByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(subscriptions).where(eq(subscriptions.userId, userId));
+}
+
+// Agent execution queries
+export async function getExecutionsByDeploymentId(deploymentId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(agentExecutions).where(eq(agentExecutions.deploymentId, deploymentId));
+}
